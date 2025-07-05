@@ -17,6 +17,7 @@ export default function App() {
           {workouts.map((workout) => (
             <li key={workout.title}>
               <Workout
+                id={workout.title}
                 {...workout}
                 onComplete={() => handleWorkoutComplete(workout.title)}
               />

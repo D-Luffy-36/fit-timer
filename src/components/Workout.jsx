@@ -1,43 +1,56 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 
-export default function Workout({ title, description, image, time, onComplete }) {
+export default function Workout({ id, title, description, image, time, onComplete }) {
 
-    const timerRef = useRef(); // luu id của set time out
 
     const intervalRef = useRef();   // ID của setInterval (đếm giây)
 
-    const timeTominutes = time / 60000;
-
     // lưu số giây còn lại
-    const [secondsLeft, setSecondsLeft] = useState(time); // ms, chưa đổi ra giây
+    const [secondsLeft, setSecondsLeft] = useState(time / 1000); //đổi ra giây
 
-    const [_, forceUpdate] = useState(); // State ảo để ép render
+    useEffect(() => {
+        if (secondsLeft === 0 && secondsLeft !== time / 1000) {
+            alert(`⏰ ${title} is done!`);
+            handleStopWorkout(title);
+        }
+    }, [secondsLeft]);
+
+
+
 
     function handleStartWorkout() {
-        // Xóa timer/interval cũ nếu có
-        clearTimeout(timerRef.current);
+
         clearInterval(intervalRef.current);
 
+        setSecondsLeft(time / 1000); // ✔️
+
         // Todo: Start timer
-        timerRef.current = setTimeout(
+
+
+        intervalRef.current = setInterval(
             () => {
-                alert("⏰ Time's up!");
-                handleStopWorkout(title)
-            }, time
+                setSecondsLeft(prev => {
+                    if (prev <= 1) {
+                        clearInterval(intervalRef.current); // 💥 clear khi còn 0 hoặc 1
+                        return 0;
+                    }
+                    return prev - 1;
+                })
+            }, 1000
         );
+
     }
 
     function handleStopWorkout(title) {
         // Todo: Stop timer
-        clearTimeout(timerRef.current);
         clearInterval(intervalRef.current);
-
         onComplete(title);
     }
 
+
     return (
-        <article className="p-4 border rounded-lg shadow-md mb-4 bg-white dark:bg-gray-800"
+        <article id={id} className="p-4 border rounded-lg shadow-md mb-4 bg-white dark:bg-gray-800"
             style={{
                 backgroundImage: `url(${image})`,
                 backgroundSize: 'cover',
@@ -48,7 +61,18 @@ export default function Workout({ title, description, image, time, onComplete })
         >
             <h3 className="text-xl font-bold mb-2">{title}</h3>
             <p className="mb-2 text-gray-700 dark:text-gray-300">{description}</p>
-            <p className="mb-4 text-gray-500">{timeTominutes} min{timeTominutes > 1 ? "s" : ""}</p>
+            {/* ui dừng lại 1 */}
+            <p className="text-gray-800 bg-gray-100 mb-4 px-4 py-2 rounded-full font-bold text-center shadow">
+                {secondsLeft !== time / 1000
+                    ? <>
+                        ⏳ {secondsLeft} second{secondsLeft !== 1 ? "s" : ""}
+                    </>
+                    : <>
+                        🕒 {time / 60000} minute{time / 60000 !== 1 ? "s" : ""}
+                    </>
+                }
+            </p>
+
             <div className="flex gap-2">
                 <button
                     onClick={handleStartWorkout}
